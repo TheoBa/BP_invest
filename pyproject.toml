@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "bp-invest"
+version = "0.1.0"
+description = ""
+authors = ["theo.badoz <theo.badoz@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pandas = "^2.2.2"
+streamlit = "^1.37.1"
+plotly = "^5.23.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
