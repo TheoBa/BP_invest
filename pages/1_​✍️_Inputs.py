@@ -172,7 +172,7 @@ def input_tabs():
             real_estate_df = pd.concat([df1, df2], axis=1)
             real_estate_df['timestamp'] = today
             real_estate_df['real_estate_id'] = real_estate_id
-            df_updated = pd.concat(df0, real_estate_df, ignore_index=True)
+            df_updated = pd.concat([df0, real_estate_df], ignore_index=True)
 
             upload_dataframe(df_updated, "02data.csv")
             st.markdown("Sauvegarde réussie !")
