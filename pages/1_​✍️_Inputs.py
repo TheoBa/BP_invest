@@ -165,20 +165,18 @@ def input_tabs():
         real_estate_id = st.text_input("Id du bien (id à partir duquel on y fera référence)")
         today = datetime.date.today()
         if st.button("Upload real estate data"):
-            # df0 = download_dataframe("02data.csv")
+            df0 = download_dataframe("02data.csv")
             df1 = st.session_state.input_financial_hypothesis
             df2 = st.session_state.input_information_actif
-            st.dataframe(df1)
-            st.dataframe(df2)
             
             real_estate_df = pd.concat([df1, df2], axis=1)
             real_estate_df['timestamp'] = today
             real_estate_df['real_estate_id'] = real_estate_id
-            # df_updated = pd.concat(df0, real_estate_df, ignore_index=True)
+            df_updated = pd.concat(df0, real_estate_df, ignore_index=True)
 
-            upload_dataframe(real_estate_df, "02data.csv")
-            # upload_dataframe(df_updated, "02data.csv")
+            upload_dataframe(df_updated, "02data.csv")
             st.markdown("Sauvegarde réussie !")
+
         if st.button("dl updated csv"):
             df = download_dataframe("02data.csv")
             st.dataframe(df)
