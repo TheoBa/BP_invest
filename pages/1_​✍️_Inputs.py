@@ -3,6 +3,7 @@ import pandas as pd
 from google.cloud import storage
 from google.oauth2 import service_account
 import io
+import datetime
 
 
 service_account_info = {
@@ -59,32 +60,34 @@ def create_inputs():
             "Taxe ordures (/m²)": []
             })
         st.session_state.input_information_actif = input_information_actif
-    if 'input_information_actif' not in st.session_state:
-        input_information_actif = pd.DataFrame({
-            'Adresse': [],
-            'Ville': [],
-            'Année de construction': [],
-            'Surface (m²)': [],
-            "Prix d'achat (FAI)": [],
-            "Taux frais d'acquisition": [],
-            "Date d'acquisition": [],
-            "Revenus locatif mensuels": [],
-            "Taxe foncière annuelle": [],
-            "Charge copro annuelle": [],
-            "Petit entretien et travaux (/m²)": [],
-            "Taxe ordures (/m²)": []
+    if 'input_financial_hypothesis' not in st.session_state:
+        input_financial_hypothesis = pd.DataFrame({
+            "LTV": [],
+            "Durée d'emprunt": [],
+            "Amortissement": [],
+            "Management fee": [],
+            "Indexation des dépenses": [],
+            "Frais d'agence à la revente": [],
+            "Valeur vénale (/m²)": [],
+            "Durée de détention (en années)": [],
+            "Prélèvement BIC": []
             })
-        st.session_state.input_information_actif = input_information_actif
+        st.session_state.input_financial_hypothesis = input_financial_hypothesis
     
-    # Show current data
+    # Show referenced data
     st.markdown(
         """
             ### Données référencées
             Veillez bien à ce que les informations soient correctes avant d'uploader ce bien dans la base de données
         """
         )
-    df = st.session_state.input_information_actif.rename(index={0: "Information actif"}).T
-    st.dataframe(df)
+    col1, col2 = st.columns(2)
+    with col1:
+        df = st.session_state.input_information_actif.rename(index={0: "Information actif"}).T
+        st.dataframe(df)
+    with col2:
+        df = st.session_state.input_financial_hypothesis.rename(index={0: "Hypothèses financières"}).T
+        st.dataframe(df)
 
 
 def query_information_actif():
@@ -121,27 +124,31 @@ def query_information_actif():
 
 def query_hypothesis():
     with st.form("hypothesis_form"):
-        ltv = st.text_input("LTV")
-        loan = st.text_input("Durée d'emprunt")
+        ltv = st.number_input("LTV")
+        applications_fees = st.number_input("Frais de dossier")
+        loan = st.number_input("Durée d'emprunt")
         amortissement = st.number_input("Amortissement")
+        interest_rate = st.number_input("Taux d'intérêt (TAEG)")
         fee = st.number_input("Management fee")
         spend = st.number_input("Indexation des dépenses")
         resell = st.number_input("Frais d'agence à la revente")
-        venal = st.date_input("Valeur vénale (/m²)")
-        detention = st.number_input("Durée de détention")
+        venal = st.number_input("Valeur vénale (/m²)")
+        detention = st.number_input("Durée de détention (en années)")
         bic = st.number_input("Prélèvement BIC")
 
         submitted = st.form_submit_button("Submit")
         if submitted:
-            st.session_state.input_information_actif = pd.DataFrame({
+            st.session_state.input_financial_hypothesis = pd.DataFrame({
             "LTV": [ltv],
+            "applications_fees": [applications_fees],
             "Durée d'emprunt": [loan],
             "Amortissement": [amortissement],
+            "Taux d'intérêt (TAEG)": [interest_rate],
             "Management fee": [fee],
             "Indexation des dépenses": [spend],
             "Frais d'agence à la revente": [resell],
             "Valeur vénale (/m²)": [venal],
-            "Durée de détention": [detention],
+            "Durée de détention (en années)": [detention],
             "Prélèvement BIC": [bic]
             })
     return
@@ -154,14 +161,24 @@ def input_tabs():
     with tab_hypothesis:
         query_hypothesis()
     with tab_save_real_estate:
-        if st.button("dl csv"):
-            df = download_dataframe("01data.csv")
-            st.dataframe(df)
         st.markdown("Si le check ci-dessus est satisfaisant, vous pouvez uploader les info du bien dans le cloud ☁️")
-        st.dataframe(st.session_state.input_information_actif)
-        if st.button("Update worksheet"):
-            upload_dataframe(st.session_state.input_information_actif, "02data.csv")
-            st.markdown("Bien sauvegardé !")
+        real_estate_id = st.text_input("Id du bien (id à partir duquel on y fera référence)")
+        today = datetime.date.today()
+        if st.button("Upload real estate data"):
+            # df0 = download_dataframe("02data.csv")
+            df1 = st.session_state.input_financial_hypothesis
+            df2 = st.session_state.input_information_actif
+            st.dataframe(df1)
+            st.dataframe(df2)
+            
+            real_estate_df = pd.concat([df1, df2], axis=1)
+            real_estate_df['timestamp'] = today
+            real_estate_df['real_estate_id'] = real_estate_id
+            # df_updated = pd.concat(df0, real_estate_df, ignore_index=True)
+
+            upload_dataframe(real_estate_df, "02data.csv")
+            # upload_dataframe(df_updated, "02data.csv")
+            st.markdown("Sauvegarde réussie !")
         if st.button("dl updated csv"):
             df = download_dataframe("02data.csv")
             st.dataframe(df)
