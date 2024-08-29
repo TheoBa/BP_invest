@@ -6,6 +6,7 @@ import io
 import datetime
 
 
+st.set_page_config(page_title="✍️ Inputs", page_icon="✍️")
 service_account_info = {
     "type": st.secrets["connections"]["gcs"]["type"],
     "project_id": st.secrets["connections"]["gcs"]["project_id"],
