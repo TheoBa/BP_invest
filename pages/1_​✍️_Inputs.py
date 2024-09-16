@@ -53,6 +53,13 @@ def init_input(INPUT):
     )
 
 
+def initialize_inputs():
+    for key, value in REAL_ESTATE_INPUTS.items():
+        session_key = f'_{key}'
+        if session_key not in st.session_state:
+            st.session_state[session_key] = init_input(value)
+
+
 def create_inputs():
     # Create an empty dataframe on first page load, will skip on page reloads
     if '_input_information_actif' not in st.session_state:
@@ -142,23 +149,23 @@ def create_real_estate_input_forms(inputs: Dict[str, Dict[str, str]]) -> pd.Data
 def save_real_estate():
     st.markdown("Si le check ci-dessus est satisfaisant, vous pouvez uploader les info du bien dans le cloud ☁️")
     real_estate_id = st.text_input("Id du bien (Default: Adresse)", value="Default")
-        today = datetime.date.today()
-        if st.button("Upload real estate data"):
-            df0 = download_dataframe("02data.csv")
-            df1 = st.session_state.input_financial_hypothesis
-            df2 = st.session_state.input_information_actif
-            
-            real_estate_df = pd.concat([df1, df2], axis=1)
-            real_estate_df['timestamp'] = today
-            real_estate_df['real_estate_id'] = real_estate_id
-            df_updated = pd.concat([df0, real_estate_df], ignore_index=True)
+    today = datetime.date.today()
+    if st.button("Upload real estate data"):
+        df0 = download_dataframe("02data.csv")
+        df1 = st.session_state.input_financial_hypothesis
+        df2 = st.session_state.input_information_actif
+        
+        real_estate_df = pd.concat([df1, df2], axis=1)
+        real_estate_df['timestamp'] = today
+        real_estate_df['real_estate_id'] = real_estate_id
+        df_updated = pd.concat([df0, real_estate_df], ignore_index=True)
 
-            upload_dataframe(df_updated, "02data.csv")
-            st.markdown("Sauvegarde réussie !")
+        upload_dataframe(df_updated, "02data.csv")
+        st.markdown("Sauvegarde réussie !")
 
-        if st.button("dl updated csv"):
-            df = download_dataframe("02data.csv")
-            st.dataframe(df)
+    if st.button("dl updated csv"):
+        df = download_dataframe("02data.csv")
+        st.dataframe(df)
 
 
 def input_tabs():
@@ -169,6 +176,7 @@ def input_tabs():
         save_real_estate()
 
 
-create_inputs()
+initialize_inputs()
+#create_inputs()
 display_inputs()
 input_tabs()
