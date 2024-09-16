@@ -7,8 +7,8 @@ REAL_ESTATE_INPUTS = {
     },
   
     "input_buying_hypothesis" : {
-        "Prix d'achat (FAI)": 'euros',
-        "Taux frais d'acquisition": 'rate',
+        "Prix d'achat": 'euros',
+        "Frais d'acquisition (prct prix d'achat)": 'rate',
         "Travaux": 'euros'
     },
 

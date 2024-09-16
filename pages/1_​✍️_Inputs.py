@@ -60,41 +60,6 @@ def initialize_inputs():
             st.session_state[session_key] = init_input(value)
 
 
-def create_inputs():
-    # Create an empty dataframe on first page load, will skip on page reloads
-    if '_input_information_actif' not in st.session_state:
-        input_information_actif = init_input(REAL_ESTATE_INPUTS["input_information_actif"])
-        st.session_state._input_information_actif = input_information_actif
-
-    if '_input_buying_hypothesis' not in st.session_state:
-        input_buying_hypothesis = init_input(REAL_ESTATE_INPUTS["input_buying_hypothesis"])
-        st.session_state._input_buying_hypothesis = input_buying_hypothesis
-
-    if '_input_financial_hypothesis' not in st.session_state:
-        input_financial_hypothesis = init_input(REAL_ESTATE_INPUTS["input_financial_hypothesis"])
-        st.session_state._input_financial_hypothesis = input_financial_hypothesis
-
-    if '_input_market_hypothesis' not in st.session_state:
-        input_market_hypothesis = init_input(REAL_ESTATE_INPUTS["input_market_hypothesis"])
-        st.session_state._input_market_hypothesis = input_market_hypothesis
-
-    if '_input_annual_revenue' not in st.session_state:
-        input_annual_revenue = init_input(REAL_ESTATE_INPUTS["input_annual_revenue"])
-        st.session_state._input_annual_revenue = input_annual_revenue
-
-    if '_input_recurring_charges' not in st.session_state:
-        input_recurring_charges = init_input(REAL_ESTATE_INPUTS["input_recurring_charges"])
-        st.session_state._input_recurring_charges = input_recurring_charges
-
-    if '_input_operating_capex' not in st.session_state:
-        input_operating_capex = init_input(REAL_ESTATE_INPUTS["input_operating_capex"])
-        st.session_state._input_operating_capex = input_operating_capex
-
-    if '_input_market_sensitivity' not in st.session_state:
-        input_market_sensitivity = init_input(REAL_ESTATE_INPUTS["input_market_sensitivity"])
-        st.session_state._input_market_sensitivity = input_market_sensitivity
-    
-
 def display_inputs():
     # Show referenced data
     st.markdown(
@@ -177,6 +142,5 @@ def input_tabs():
 
 
 initialize_inputs()
-#create_inputs()
 display_inputs()
 input_tabs()
