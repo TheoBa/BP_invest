@@ -49,31 +49,63 @@ def create_inputs():
         input_information_actif = pd.DataFrame({
             'Adresse': [],
             'Ville': [],
-            'Année de construction': [],
+            'DPE': [],
             'Surface (m²)': [],
-            "Prix d'achat (FAI)": [],
-            "Taux frais d'acquisition": [],
-            "Date d'acquisition": [],
-            "Revenus locatif mensuels": [],
-            "Taxe foncière annuelle": [],
-            "Charge copro annuelle": [],
-            "Petit entretien et travaux (/m²)": [],
-            "Taxe ordures (/m²)": []
             })
         st.session_state.input_information_actif = input_information_actif
+    if 'input_buying_hypothesis' not in st.session_state:
+        input_buying_hypothesis = pd.DataFrame({
+            "Prix d'achat (FAI)": [],
+            "Taux frais d'acquisition": [],
+            "Travaux": []
+            })
+        st.session_state.input_buying_hypothesis = input_buying_hypothesis
     if 'input_financial_hypothesis' not in st.session_state:
         input_financial_hypothesis = pd.DataFrame({
+            "Apport": [],
             "LTV": [],
-            "Durée d'emprunt": [],
-            "Amortissement": [],
-            "Management fee": [],
-            "Indexation des dépenses": [],
-            "Frais d'agence à la revente": [],
-            "Valeur vénale (/m²)": [],
-            "Durée de détention (en années)": [],
-            "Prélèvement BIC": []
+            "Taux d'emprunt": [],
+            "Durée de crédit (année)": []
             })
         st.session_state.input_financial_hypothesis = input_financial_hypothesis
+    if 'input_market_hypothesis' not in st.session_state:
+        input_market_hypothesis = pd.DataFrame({
+            "Durée de détention": [],
+            "Valeur de sortie": [],
+            "Frais de vente (taux)": [],
+            "Taux d'actualisation": []
+            })
+        st.session_state.input_market_hypothesis = input_market_hypothesis
+    if 'input_annual_revenue' not in st.session_state:
+        input_annual_revenue = pd.DataFrame({
+            "Loyer": []
+            })
+        st.session_state.input_annual_revenue = input_annual_revenue
+    if 'input_recurring_charges' not in st.session_state:
+        input_annual_revenue = pd.DataFrame({
+            "Remboursement": [],
+            "Gestion locative": [],
+            "Comptabiltié": [],
+            "Frais de copropriété": [],
+            "Taxe foncière": [],
+            "Frais d'entretien": [],
+            "Assurance (GLI, PNO)": []
+            })
+        st.session_state.input_recurring_charges = input_recurring_charges
+    if 'input_operating_capex' not in st.session_state:
+        input_operating_capex = pd.DataFrame({
+            "Travaux non récurrent": [],
+            "Fréquence": []
+            })
+        st.session_state.input_operating_capex = input_operating_capex
+    if 'input_market_sensitivity' not in st.session_state:
+        input_market_sensitivity = pd.DataFrame({
+            "Market Value Gross": [],
+            "Property Tax Gross": [],
+            "Vacancy": [],
+            "Loyers Impayés": []
+            })
+        st.session_state.input_market_sensitivity = input_oinput_market_sensitivityperating_capex
     
     # Show referenced data
     st.markdown(
