@@ -82,14 +82,13 @@ def create_inputs():
             })
         st.session_state.input_annual_revenue = input_annual_revenue
     if 'input_recurring_charges' not in st.session_state:
-        input_annual_revenue = pd.DataFrame({
-            "Remboursement": [],
+        input_recurring_charges = pd.DataFrame({
             "Gestion locative": [],
             "Comptabiltié": [],
             "Frais de copropriété": [],
             "Taxe foncière": [],
-            "Frais d'entretien": [],
-            "Assurance (GLI, PNO)": []
+            "Frais d'entretien (%prix d'achat)": [],
+            "Assurance (GLI, PNO) (%prix d'achat)": []
             })
         st.session_state.input_recurring_charges = input_recurring_charges
     if 'input_operating_capex' not in st.session_state:
@@ -118,8 +117,20 @@ def create_inputs():
     with col1:
         df = st.session_state.input_information_actif.rename(index={0: "Information actif"}).T
         st.dataframe(df)
+        df = st.session_state.input_buying_hypothesis.rename(index={0: "Hypothèse Achat"}).T
+        st.dataframe(df)
+        df = st.session_state.input_financial_hypothesis.rename(index={0: "Financement"}).T
+        st.dataframe(df)
+        df = st.session_state.input_market_hypothesis.rename(index={0: "Hypothèses Marché"}).T
+        st.dataframe(df)
     with col2:
-        df = st.session_state.input_financial_hypothesis.rename(index={0: "Hypothèses financières"}).T
+        df = st.session_state.input_annual_revenue.rename(index={0: "Revenus Annuels"}).T
+        st.dataframe(df)
+        df = st.session_state.input_recurring_charges.rename(index={0: "Charges Récurrentes"}).T
+        st.dataframe(df)
+        df = st.session_state.input_operating_capex.rename(index={0: "Operating CAPEX Travaux"}).T
+        st.dataframe(df)
+        df = st.session_state.input_market_sensitivity.rename(index={0: "Sensibilité Marché"}).T
         st.dataframe(df)
 
 
