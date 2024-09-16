@@ -4,6 +4,8 @@ from google.cloud import storage
 from google.oauth2 import service_account
 import io
 import datetime
+from utils.inputs import REAL_ESTATE_INPUTS
+from typing import Dict, Any
 
 
 st.set_page_config(page_title="✍️ Inputs", page_icon="✍️")
@@ -43,69 +45,50 @@ def upload_dataframe(df, filename):
     blob.upload_from_file(csv_buffer, content_type='text/csv')
 
 
+def init_input(INPUT):
+    return pd.DataFrame(
+        {
+            key: []
+        } for key in INPUT
+    )
+
+
 def create_inputs():
     # Create an empty dataframe on first page load, will skip on page reloads
-    if 'input_information_actif' not in st.session_state:
-        input_information_actif = pd.DataFrame({
-            'Adresse': [],
-            'Ville': [],
-            'DPE': [],
-            'Surface (m²)': [],
-            })
-        st.session_state.input_information_actif = input_information_actif
-    if 'input_buying_hypothesis' not in st.session_state:
-        input_buying_hypothesis = pd.DataFrame({
-            "Prix d'achat (FAI)": [],
-            "Taux frais d'acquisition": [],
-            "Travaux": []
-            })
-        st.session_state.input_buying_hypothesis = input_buying_hypothesis
-    if 'input_financial_hypothesis' not in st.session_state:
-        input_financial_hypothesis = pd.DataFrame({
-            "Apport": [],
-            "LTV": [],
-            "Taux d'emprunt": [],
-            "Durée de crédit (année)": []
-            })
-        st.session_state.input_financial_hypothesis = input_financial_hypothesis
-    if 'input_market_hypothesis' not in st.session_state:
-        input_market_hypothesis = pd.DataFrame({
-            "Durée de détention": [],
-            "Valeur de sortie": [],
-            "Frais de vente (taux)": [],
-            "Taux d'actualisation": []
-            })
-        st.session_state.input_market_hypothesis = input_market_hypothesis
-    if 'input_annual_revenue' not in st.session_state:
-        input_annual_revenue = pd.DataFrame({
-            "Loyer": []
-            })
-        st.session_state.input_annual_revenue = input_annual_revenue
-    if 'input_recurring_charges' not in st.session_state:
-        input_recurring_charges = pd.DataFrame({
-            "Gestion locative": [],
-            "Comptabiltié": [],
-            "Frais de copropriété": [],
-            "Taxe foncière": [],
-            "Frais d'entretien (%prix d'achat)": [],
-            "Assurance (GLI, PNO) (%prix d'achat)": []
-            })
-        st.session_state.input_recurring_charges = input_recurring_charges
-    if 'input_operating_capex' not in st.session_state:
-        input_operating_capex = pd.DataFrame({
-            "Travaux non récurrent": [],
-            "Fréquence": []
-            })
-        st.session_state.input_operating_capex = input_operating_capex
-    if 'input_market_sensitivity' not in st.session_state:
-        input_market_sensitivity = pd.DataFrame({
-            "Market Value Gross": [],
-            "Property Tax Gross": [],
-            "Vacancy": [],
-            "Loyers Impayés": []
-            })
-        st.session_state.input_market_sensitivity = input_oinput_market_sensitivityperating_capex
+    if '_input_information_actif' not in st.session_state:
+        input_information_actif = init_input(REAL_ESTATE_INPUTS["input_information_actif"])
+        st.session_state._input_information_actif = input_information_actif
+
+    if '_input_buying_hypothesis' not in st.session_state:
+        input_buying_hypothesis = init_input(REAL_ESTATE_INPUTS["input_buying_hypothesis"])
+        st.session_state._input_buying_hypothesis = input_buying_hypothesis
+
+    if '_input_financial_hypothesis' not in st.session_state:
+        input_financial_hypothesis = init_input(REAL_ESTATE_INPUTS["input_financial_hypothesis"])
+        st.session_state._input_financial_hypothesis = input_financial_hypothesis
+
+    if '_input_market_hypothesis' not in st.session_state:
+        input_market_hypothesis = init_input(REAL_ESTATE_INPUTS["input_market_hypothesis"])
+        st.session_state._input_market_hypothesis = input_market_hypothesis
+
+    if '_input_annual_revenue' not in st.session_state:
+        input_annual_revenue = init_input(REAL_ESTATE_INPUTS["input_annual_revenue"])
+        st.session_state._input_annual_revenue = input_annual_revenue
+
+    if '_input_recurring_charges' not in st.session_state:
+        input_recurring_charges = init_input(REAL_ESTATE_INPUTS["input_recurring_charges"])
+        st.session_state._input_recurring_charges = input_recurring_charges
+
+    if '_input_operating_capex' not in st.session_state:
+        input_operating_capex = init_input(REAL_ESTATE_INPUTS["input_operating_capex"])
+        st.session_state._input_operating_capex = input_operating_capex
+
+    if '_input_market_sensitivity' not in st.session_state:
+        input_market_sensitivity = init_input(REAL_ESTATE_INPUTS["input_market_sensitivity"])
+        st.session_state._input_market_sensitivity = input_market_sensitivity
     
+
+def display_inputs():
     # Show referenced data
     st.markdown(
         """
@@ -115,98 +98,50 @@ def create_inputs():
         )
     col1, col2 = st.columns(2)
     with col1:
-        df = st.session_state.input_information_actif.rename(index={0: "Information actif"}).T
+        df = st.session_state._input_information_actif.rename(index={0: "Information actif"}).T
         st.dataframe(df)
-        df = st.session_state.input_buying_hypothesis.rename(index={0: "Hypothèse Achat"}).T
+        df = st.session_state._input_buying_hypothesis.rename(index={0: "Hypothèse Achat"}).T
         st.dataframe(df)
-        df = st.session_state.input_financial_hypothesis.rename(index={0: "Financement"}).T
+        df = st.session_state._input_financial_hypothesis.rename(index={0: "Financement"}).T
         st.dataframe(df)
-        df = st.session_state.input_market_hypothesis.rename(index={0: "Hypothèses Marché"}).T
+        df = st.session_state._input_market_hypothesis.rename(index={0: "Hypothèses Marché"}).T
         st.dataframe(df)
     with col2:
-        df = st.session_state.input_annual_revenue.rename(index={0: "Revenus Annuels"}).T
+        df = st.session_state._input_annual_revenue.rename(index={0: "Revenus Annuels"}).T
         st.dataframe(df)
-        df = st.session_state.input_recurring_charges.rename(index={0: "Charges Récurrentes"}).T
+        df = st.session_state._input_recurring_charges.rename(index={0: "Charges Récurrentes"}).T
         st.dataframe(df)
-        df = st.session_state.input_operating_capex.rename(index={0: "Operating CAPEX Travaux"}).T
+        df = st.session_state._input_operating_capex.rename(index={0: "Operating CAPEX Travaux"}).T
         st.dataframe(df)
-        df = st.session_state.input_market_sensitivity.rename(index={0: "Sensibilité Marché"}).T
+        df = st.session_state._input_market_sensitivity.rename(index={0: "Sensibilité Marché"}).T
         st.dataframe(df)
 
 
-def query_information_actif():
-    with st.form("information_actif_form"):
-        address = st.text_input("Adresse")
-        city = st.text_input("Ville")
-        year = st.number_input("Année de construction")
-        surface = st.number_input("Surface (m²)")
-        price = st.number_input("Prix d'achat (FAI)")
-        fees = st.number_input("Taux frais d'acquisition")
-        acquisition_date = st.date_input("Date d'acquisition")
-        rent = st.number_input("Revenus locatif mensuels")
-        tax = st.number_input("Taxe foncière annuelle")
-        charges = st.number_input("Charge copro annuelle")
-        maintenance = st.number_input("Petit entretien et travaux annuels (/m²)")
-        garbage = st.number_input("Taxe ordures annuelle (/m²)")
+def create_real_estate_input_forms(inputs: Dict[str, Dict[str, str]]) -> pd.DataFrame:
+    user_inputs = {}
+
+    with st.form("my_form"):
+        for section, fields in inputs.items():
+            st.subheader(section.replace("input_", "").replace("_", " ").title())
+            for field, input_type in fields.items():
+                if input_type == 'text':
+                    user_inputs[field] = st.text_input(field)
+                elif input_type in ['int', 'euros', 'rate', 'percentage', 'year']:
+                    user_inputs[field] = st.number_input(field, value=0.0)
         submitted = st.form_submit_button("Submit")
+        # Update the session state with the new DataFrame
         if submitted:
-            st.session_state.input_information_actif = pd.DataFrame({
-            'Adresse': [address],
-            'Ville': [city],
-            'Année de construction': [year],
-            'Surface (m²)': [surface],
-            "Prix d'achat (FAI)": [price],
-            "Taux frais d'acquisition": [fees],
-            "Date d'acquisition": [acquisition_date],
-            "Revenus locatif mensuels": [rent],
-            "Taxe foncière annuelle": [tax],
-            "Charge copro annuelle": [charges],
-            "Petit entretien et travaux (/m²)": [maintenance],
-            "Taxe ordures (/m²)": [garbage],
-            })
+            for section, fields in inputs.items():
+                st.session_state[f"_{section}"] = pd.DataFrame([user_inputs])[list(fields.keys())]
+
+    # Create a DataFrame with a single row
+    df = pd.DataFrame([user_inputs])    
+    return df
 
 
-def query_hypothesis():
-    with st.form("hypothesis_form"):
-        ltv = st.number_input("LTV")
-        applications_fees = st.number_input("Frais de dossier")
-        loan = st.number_input("Durée d'emprunt")
-        amortissement = st.number_input("Amortissement")
-        interest_rate = st.number_input("Taux d'intérêt (TAEG)")
-        fee = st.number_input("Management fee")
-        spend = st.number_input("Indexation des dépenses")
-        resell = st.number_input("Frais d'agence à la revente")
-        venal = st.number_input("Valeur vénale (/m²)")
-        detention = st.number_input("Durée de détention (en années)")
-        bic = st.number_input("Prélèvement BIC")
-
-        submitted = st.form_submit_button("Submit")
-        if submitted:
-            st.session_state.input_financial_hypothesis = pd.DataFrame({
-            "LTV": [ltv],
-            "applications_fees": [applications_fees],
-            "Durée d'emprunt": [loan],
-            "Amortissement": [amortissement],
-            "Taux d'intérêt (TAEG)": [interest_rate],
-            "Management fee": [fee],
-            "Indexation des dépenses": [spend],
-            "Frais d'agence à la revente": [resell],
-            "Valeur vénale (/m²)": [venal],
-            "Durée de détention (en années)": [detention],
-            "Prélèvement BIC": [bic]
-            })
-    return
-
-
-def input_tabs():
-    tab_informations, tab_hypothesis, tab_save_real_estate = st.tabs(['Informations relatif au bien','Hypothèses financières', "Sauvegarder le bien"])
-    with tab_informations:
-        query_information_actif()
-    with tab_hypothesis:
-        query_hypothesis()
-    with tab_save_real_estate:
-        st.markdown("Si le check ci-dessus est satisfaisant, vous pouvez uploader les info du bien dans le cloud ☁️")
-        real_estate_id = st.text_input("Id du bien (id à partir duquel on y fera référence)")
+def save_real_estate():
+    st.markdown("Si le check ci-dessus est satisfaisant, vous pouvez uploader les info du bien dans le cloud ☁️")
+    real_estate_id = st.text_input("Id du bien (Default: Adresse)", value="Default")
         today = datetime.date.today()
         if st.button("Upload real estate data"):
             df0 = download_dataframe("02data.csv")
@@ -226,5 +161,14 @@ def input_tabs():
             st.dataframe(df)
 
 
+def input_tabs():
+    tab_informations, tab_save_real_estate = st.tabs(['Informations relatif au bien', "Sauvegarder le bien"])
+    with tab_informations:
+        create_real_estate_input_forms(REAL_ESTATE_INPUTS)
+    with tab_save_real_estate:
+        save_real_estate()
+
+
 create_inputs()
+display_inputs()
 input_tabs()
