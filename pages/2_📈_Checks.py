@@ -1,28 +1,32 @@
 import streamlit as st
 import pandas as pd
-from typing import Dict, Any
 
 from utils.computations import PMT
 
 st.set_page_config(page_title="📈 Checks", page_icon="📈")
 
 
-def create_additional_features(section: str, user_inputs: Dict[str, Any]):
-    if section == "input_buying_hypothesis":
-        user_inputs["Frais d'acquisition"] = user_inputs["Frais d'acquisition (prct prix d'achat)"] * user_inputs["Prix d'achat"]
-        user_inputs["Prix Acquisition"] = user_inputs["Prix d'achat"] + user_inputs["Frais d'acquisition"] + user_inputs["Travaux"]
-    elif section == "input_financial_hypothesis":
-        user_inputs["LTV"] = (user_inputs["Prix Acquisition"] - user_inputs["Apport"]) / user_inputs["Prix Acquisition"]
-        user_inputs["Montant Emprunté"] = user_inputs["LTV"] * user_inputs["Prix Acquisition"]
-        user_inputs["Mensualité"] = PMT(C=user_inputs["Montant Emprunté"], n=user_inputs["Durée de crédit (année)"]*12, t=user_inputs["Taux d'emprunt"])
-    elif section == "input_market_hypothesis":
-        pass
-    elif section == "input_annual_revenue":
-        user_inputs["TOTAL Revenus"] = user_inputs["Loyer mensuel"] * 12
-    elif section == "input_recurring_charges":
-        pass
-    elif section == "input_operating_capex":
-        pass
-    elif section == "input_market_sensitivity":
-        pass
-    return user_inputs
+def create_additional_features(database_inputs: pd.DataFrame):
+    df = (
+        database_inputs
+        .assign(
+            # section == "input_buying_hypothesis"
+            Frais_d_acquisition = lambda x: x["Frais d'acquisition (prct prix d'achat)"] * x["Prix d'achat"],
+            Prix_acquisition = lambda x: x["Prix d'achat"] + x["Frais d'acquisition"] + x["Travaux"],
+            # section == "input_financial_hypothesis"
+            LTV = lambda x: (x["Prix Acquisition"] - x["Apport"]) / x["Prix Acquisition"],
+            Montant_emprunté = lambda x: x["LTV"] * x["Prix Acquisition"],
+            Mensualité = lambda x: PMT(C=x["Montant Emprunté"], n=x["Durée de crédit (année)"]*12, t=x["Taux d'emprunt"]),
+            # section == "input_market_hypothesis"
+            # TODO
+            # section == "input_annual_revenue"
+            Remboursements = lambda x: - x["Mensualité"] * 12,
+            # section == "input_recurring_charges"
+            Frais_d_entretien = lambda x: x["Frais d'entretien (prct prix d'achat)"] * x["Prix d'achat"],
+            Assurance_GLI_PNO = lambda x: x["Assurance (GLI, PNO) (prct loyer)"] * x["TOTAL Revenus"],
+            # section == "input_operating_capex"
+            TOTAL_Charges_Récurrantes = lambda x: x["Remboursements"] + x["Gestion locative"] + x["Comptabiltié"] + x["Frais de copropriété"] + x["Taxe foncière"] + x["Frais d'entretien"] + x["Assurance (GLI, PNO)"]
+        )
+    )
+    return df
+
