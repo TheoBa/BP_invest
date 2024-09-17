@@ -67,26 +67,25 @@ def display_inputs():
             ### Données référencées
             Veillez bien à ce que les informations soient correctes avant d'uploader ce bien dans la base de données
         """
-        )
+    )
+    
+    def display_dataframe(session_key, display_name):
+        df = st.session_state[session_key].rename(index={0: display_name}).T
+        st.dataframe(df)
+
     col1, col2 = st.columns(2)
+    
     with col1:
-        df = st.session_state._input_information_actif.rename(index={0: "Information actif"}).T
-        st.dataframe(df)
-        df = st.session_state._input_buying_hypothesis.rename(index={0: "Hypothèse Achat"}).T
-        st.dataframe(df)
-        df = st.session_state._input_financial_hypothesis.rename(index={0: "Financement"}).T
-        st.dataframe(df)
-        df = st.session_state._input_market_hypothesis.rename(index={0: "Hypothèses Marché"}).T
-        st.dataframe(df)
+        display_dataframe("_input_information_actif", "Information actif")
+        display_dataframe("_input_buying_hypothesis", "Hypothèse Achat")
+        display_dataframe("_input_financial_hypothesis", "Financement")
+        display_dataframe("_input_market_hypothesis", "Hypothèses Marché")
+    
     with col2:
-        df = st.session_state._input_annual_revenue.rename(index={0: "Revenus Annuels"}).T
-        st.dataframe(df)
-        df = st.session_state._input_recurring_charges.rename(index={0: "Charges Récurrentes"}).T
-        st.dataframe(df)
-        df = st.session_state._input_operating_capex.rename(index={0: "Operating CAPEX Travaux"}).T
-        st.dataframe(df)
-        df = st.session_state._input_market_sensitivity.rename(index={0: "Sensibilité Marché"}).T
-        st.dataframe(df)
+        display_dataframe("_input_annual_revenue", "Revenus Annuels")
+        display_dataframe("_input_recurring_charges", "Charges Récurrentes")
+        display_dataframe("_input_operating_capex", "Operating CAPEX Travaux")
+        display_dataframe("_input_market_sensitivity", "Sensibilité Marché")
 
 
 def create_real_estate_input_forms(inputs: Dict[str, Dict[str, str]]) -> pd.DataFrame:
