@@ -1,53 +1,53 @@
 REAL_ESTATE_INPUTS = {
     "input_information_actif" : {
-        'Adresse': 'text',
-        'Ville': 'text',
-        'DPE': 'text',
-        'Surface (m²)': 'int'
+        'adresse': ['text', "6 Boulevard Pasteur"],
+        'ville': ['text', "Dreux"],
+        'dpe': ['text', "E"],
+        'surface_(m²)': ['int', 55.77]
     },
   
     "input_buying_hypothesis" : {
-        "Valeur vénale": 'euros',
-        "Prix d'achat": 'euros',
-        "Frais d'acquisition (prct prix d'achat)": 'rate',
-        "Travaux": 'euros'
+        "valeur_vénale": ['euros', 109466],
+        "prix_d_achat": ['euros', 93000],
+        "frais_d_acquisition_(prct_prix_d_achat)": ['rate', 8],
+        "travaux": ['euros', 0]
     },
 
     "input_financial_hypothesis" : {
-        "Apport": 'euros',
-        "Taux d'emprunt": 'percentage',
-        "Durée de crédit (année)": 'year'
+        "apport": ['euros', 9300],
+        "taux_d_emprunt": ['percentage', 2.72],
+        "durée_de_crédit_(année)": ['year', 25]
     },
 
     "input_market_hypothesis" : {
-        "Durée de détention (année)": 'year',
-        "Frais de vente (taux)": 'rate',
-        "Taux d'actualisation": 'percentage'
+        "durée_de_détention_(année)": ['year', 15],
+        "frais_de_vente_(taux)": ['rate', 3.5],
+        "taux_d_actualisation": ['percentage', 5]
     },
 
     "input_annual_revenue" : {
-        "Loyer mensuel": 'euros'
+        "loyer_mensuel": ['euros', 721]
     },
 
     "input_recurring_charges" : {
-        "Gestion locative": 'euros',
-        "Comptabilité": 'euros',
-        "Frais de copropriété": 'euros',
-        "Taxe foncière": 'euros',
-        "Frais d'entretien (prct prix d'achat)": 'rate',
-        "Assurance (GLI, PNO) (prct loyer)": 'rate'
+        "gestion_locative": ['euros', 0],
+        "comptabilité": ['euros', 0],
+        "frais_de_copropriété": ['euros', 1400],
+        "taxe_foncière": ['euros', 700],
+        "frais_d_entretien_(prct_prix_d_achat)": ['rate', 1],
+        "assurance_(gli,_pno)_(prct_loyer)": ['rate', 5]
     },
 
     "input_operating_capex" : {
-        "Travaux non récurrent": 'euros',
-        "Fréquence": 'year'
+        "travaux_non_récurrent": ['euros', 2000],
+        "fréquence": ['year', 3]
     },
 
     "input_market_sensitivity" : {
-        "Market Value Growth": 'percentage',
-        "Market Rent Growth": 'percentage',
-        "Property Tax Growth": 'percentage',
-        "Vacancy": 'percentage',
-        "Loyers Impayés": 'percentage'
+        "market_value_growth": ['percentage', 1],
+        "market_rent_growth": ['percentage', 2],
+        "property_tax_growth": ['percentage', 1],
+        "vacancy": ['percentage', 2],
+        "loyers_impayés": ['percentage', 0]
     }
 }

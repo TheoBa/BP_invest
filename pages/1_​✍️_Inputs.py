@@ -58,11 +58,15 @@ def create_real_estate_input_forms(inputs: Dict[str, Dict[str, str]]) -> pd.Data
     with st.form("my_form"):
         for section, fields in inputs.items():
             st.subheader(section.replace("input_", "").replace("_", " ").title())
-            for field, input_type in fields.items():
+            for field, input_properties in fields.items():
+                input_type = input_properties[0]
+                init_value = input_properties[1]
                 if input_type == 'text':
-                    user_inputs[field] = st.text_input(field)
-                elif input_type in ['int', 'euros', 'rate', 'percentage', 'year']:
-                    user_inputs[field] = st.number_input(field, value=0.0)
+                    user_inputs[field] = st.text_input(field, value=init_value)
+                elif input_type in ['percentage', 'rate']:
+                    user_inputs[field] = st.number_input(field, value=init_value) / 100
+                elif input_type in ['int', 'euros', 'year']:
+                    user_inputs[field] = st.number_input(field, value=init_value)
         submitted = st.form_submit_button("Submit")
         # Update the session state with the new DataFrame
         if submitted:

@@ -14,24 +14,24 @@ def create_additional_features(database_inputs: pd.DataFrame):
         .copy()
         .assign(
             # section "input_buying_hypothesis"
-            Frais_d_acquisition = lambda x: x["Frais d'acquisition (prct prix d'achat)"] * x["Prix d'achat"],
-            Prix_acquisition = lambda x: x["Prix d'achat"] + x["Frais_d_acquisition"] + x["Travaux"],
+            frais_d_acquisition = lambda x: x["frais_d_acquisition_(prct_prix_d_achat)"] * x["prix_d_achat"],
+            prix_acquisition = lambda x: x["prix_d_achat"] + x["frais_d_acquisition"] + x["travaux"],
             # section "input_financial_hypothesis"
-            LTV = lambda x: (x["Prix_acquisition"] - x["Apport"]) / x["Prix_acquisition"],
-            Montant_emprunté = lambda x: x["LTV"] * x["Prix_acquisition"],
-            Mensualité = lambda x: PMT(C=x["Montant_emprunté"], n=x["Durée de crédit (année)"]*12, t=x["Taux d'emprunt"]),
+            ltv = lambda x: (x["prix_acquisition"] - x["apport"]) / x["prix_acquisition"],
+            montant_emprunté = lambda x: x["ltv"] * x["prix_acquisition"],
+            mensualité = lambda x: PMT(C=x["montant_emprunté"], n=x["durée_de_crédit_(année)"]*12, t=x["taux_d_emprunt"]),
             # section "input_market_hypothesis"
-            capital_restant_dû = lambda x: - compute_remaining_capital_after_y_years(C=x["Prix_acquisition"], M=x["Mensualité"], t=x["Taux d'emprunt"], y=x["Durée de crédit (année)"]),
-            valeur_de_sortie = lambda x: x["Valeur vénale"] * (1+ x["Market Value Growth"]) ** x["Durée de détention (année)"],
-            frais_de_vente = lambda x: - x["Frais de vente (taux)"] * x["valeur_de_sortie"],
+            capital_restant_dû = lambda x: - compute_remaining_capital_after_y_years(C=x["prix_acquisition"], M=x["mensualité"], t=x["taux_d_emprunt"], y=x["durée_de_détention_(année)"]),
+            valeur_de_sortie = lambda x: x["valeur_vénale"] * (1+ x["market_value_growth"]) ** x["durée_de_détention_(année)"],
+            frais_de_vente = lambda x: - x["frais_de_vente_(taux)"] * x["valeur_de_sortie"],
             valeur_nette_de_sortie = lambda x: x["valeur_de_sortie"] + x["frais_de_vente"] + x["capital_restant_dû"],
             # section "input_annual_revenue"
-            Remboursements = lambda x: - x["Mensualité"] * 12,
+            remboursements = lambda x: - x["mensualité"] * 12,
             # section "input_recurring_charges"
-            Frais_d_entretien = lambda x: x["Frais d'entretien (prct prix d'achat)"] * x["Prix d'achat"],
-            Assurance_GLI_PNO = lambda x: x["Assurance (GLI, PNO) (prct loyer)"] * x['Loyer mensuel'] * 12,
+            frais_d_entretien = lambda x: x["frais_d_entretien_(prct_prix_d_achat)"] * x["prix_d_achat"],
+            assurance_gli_pno = lambda x: x["assurance_(gli,_pno)_(prct_loyer)"] * x['loyer_mensuel'] * 12,
             # section "input_operating_capex"
-            TOTAL_Charges_Récurrantes = lambda x: x["Remboursements"] + x["Gestion locative"] + x["Comptabilité"] + x["Frais de copropriété"] + x["Taxe foncière"] + x["Frais_d_entretien"] + x["Assurance_GLI_PNO"]
+            total_charges_récurrantes = lambda x: x["remboursements"] + x["gestion_locative"] + x["comptabilité"] + x["frais_de_copropriété"] + x["taxe_foncière"] + x["frais_d_entretien"] + x["assurance_gli_pno"]
         )
         .rename(columns=lambda x: x.lower().replace(" ", "_").replace("'", "_"))
     )
@@ -47,30 +47,30 @@ def build_yearly_cashflow_df(real_estate_df: pd.DataFrame, time_horizon: int = 3
     - year: from 0 to time_horizon
     
     Income:
-    - rent: rent of previous year * (1 + real_estate_df.loc[0, "market_rent_growth"]), initialized with real_estate_df.loc[0, "rent"]
+    - rent: rent of previous year * (1 + real_estate_df.loc[0, "market_rent_growth"]), 0 in year 0 and real_estate_df.loc[0, "rent"] in year 1
     - vacancy: rent of the year * real_estate_df.loc[0, "vacancy"]
     - unpaied_rent: rent of the year * real_estate_df.loc[0, "unpaied_rent"]
     - gross_effective_revenues: sum of rent, vacancy and unpaied_rent
     
     Recurring charges: (algebric values so always negative)
-    - gestion_locative: real_estate_df.loc[0, "gestion_locative"] of the year * real_estate_df.loc[0, "property_tax_growth"]
-    - comptabilité: real_estate_df.loc[0, "comptabilité"] of the year * real_estate_df.loc[0, "property_tax_growth"]
-    - frais_de_copropriété: real_estate_df.loc[0, "frais_de_copropriété"] of the year * real_estate_df.loc[0, "property_tax_growth"]
-    - taxe_foncière: real_estate_df.loc[0, "taxe_foncière"] of the year * real_estate_df.loc[0, "property_tax_growth"]
-    - frais_d_entretien: real_estate_df.loc[0, "frais_d_entretien"] of the year * real_estate_df.loc[0, "property_tax_growth"]
-    - assurance_gli_pno: real_estate_df.loc[0, "assurance_gli_pno"] of the year * real_estate_df.loc[0, "property_tax_growth"]
+    - gestion_locative: gestion_locative of previous year * (1 + real_estate_df.loc[0, "property_tax_growth"]), 0 in year 0 and real_estate_df.loc[0, "gestion_locative"] in year 1
+    - comptabilité: comptabilité of previous year * (1 + real_estate_df.loc[0, "property_tax_growth"]), 0 in year 0 and real_estate_df.loc[0, "comptabilité"] in year 1
+    - frais_de_copropriété: frais_de_copropriété of previous year * (1 + real_estate_df.loc[0, "property_tax_growth"]), 0 in year 0 and real_estate_df.loc[0, "frais_de_copropriété"] in year 1
+    - taxe_foncière: taxe_foncière of previous year * (1 + real_estate_df.loc[0, "property_tax_growth"]), 0 in year 0 and real_estate_df.loc[0, "taxe_foncière"] in year 1
+    - frais_d_entretien: frais_d_entretien of previous year * (1 + real_estate_df.loc[0, "property_tax_growth"]), 0 in year 0 and real_estate_df.loc[0, "frais_d_entretien"] in year 1
+    - assurance_gli_pno: assurance_gli_pno of previous year * (1 + real_estate_df.loc[0, "property_tax_growth"]), 0 in year 0 and real_estate_df.loc[0, "assurance_gli_pno"] in year 1
     - total_charges_récurrantes: sum of gestion_locative, comptabilité, frais_de_copropriété, taxe_foncière, frais_d_entretien, assurance_gli_pno
     
     Net Operating Income:
     - net_operating_income: algebric sum of gross_effective_revenues and total_charges_récurrantes
     
     Non Recurring charges: (algebric values so always negative)
-    - apport: real_estate_df.loc[0, "apport"] only in the first year then 0
+    - apport: real_estate_df.loc[0, "apport"] only in year 0 then 0
     - travaux_non_récurrents: real_estate_df.loc[0, "travaux_non_récurrents"] every "fréquence" years, 0 otherwise
     - total_non_recurring_charges: sum of apport and travaux_non_récurrents
     
     Debt:
-    - remboursements: real_estate_df.loc[0, "remboursements"] every year
+    - remboursements: 0 in year 0 and real_estate_df.loc[0, "remboursements"] every other year
     - cash_flow_after_debt: algebric sum of net_operating_income, total_non_recurring_charges and remboursements
     - cumulative_cash_flow_after_debt: cumulative sum of cash_flow_after_debt through the years
 
@@ -90,7 +90,7 @@ def build_yearly_cashflow_df(real_estate_df: pd.DataFrame, time_horizon: int = 3
     yearly_cashflow_df = pd.DataFrame({'year': range(time_horizon + 1)})
     
     # Income
-    yearly_cashflow_df['rent'] = real_estate_df.loc[0, 'loyer_mensuel'] * 12 * (1 + real_estate_df.loc[0, 'market_rent_growth']) ** yearly_cashflow_df['year']
+    yearly_cashflow_df['rent'] = np.where(yearly_cashflow_df['year'] == 0, 0, real_estate_df.loc[0, 'loyer_mensuel'] * 12 * (1 + real_estate_df.loc[0, 'market_rent_growth']) ** (yearly_cashflow_df['year'] - 1))                                                       
     yearly_cashflow_df['vacancy'] = -yearly_cashflow_df['rent'] * real_estate_df.loc[0, 'vacancy']
     yearly_cashflow_df['unpaied_rent'] = -yearly_cashflow_df['rent'] * real_estate_df.loc[0, 'loyers_impayés']
     yearly_cashflow_df['gross_effective_revenues'] = yearly_cashflow_df['rent'] + yearly_cashflow_df['vacancy'] + yearly_cashflow_df['unpaied_rent']
@@ -98,7 +98,9 @@ def build_yearly_cashflow_df(real_estate_df: pd.DataFrame, time_horizon: int = 3
     # Recurring charges
     recurring_charges = ['gestion_locative', 'comptabilité', 'frais_de_copropriété', 'taxe_foncière', 'frais_d_entretien', 'assurance_gli_pno']
     for charge in recurring_charges:
-        yearly_cashflow_df[charge] = -real_estate_df.loc[0, charge] * (1 + real_estate_df.loc[0, 'property_tax_growth']) ** yearly_cashflow_df['year']
+        #yearly_cashflow_df[charge] = -real_estate_df.loc[0, charge] * (1 + real_estate_df.loc[0, 'property_tax_growth']) ** (yearly_cashflow_df['year'] - 1)
+        yearly_cashflow_df[charge] = np.where(yearly_cashflow_df['year'] == 0, 0, -real_estate_df.loc[0, charge] * (1 + real_estate_df.loc[0, 'property_tax_growth']) ** (yearly_cashflow_df['year'] - 1))                                                       
+
     
     yearly_cashflow_df['total_charges_récurrantes'] = yearly_cashflow_df[recurring_charges].sum(axis=1)
     
@@ -110,12 +112,12 @@ def build_yearly_cashflow_df(real_estate_df: pd.DataFrame, time_horizon: int = 3
     yearly_cashflow_df.loc[0, 'apport'] = -real_estate_df.loc[0, 'apport']
     
     frequency = real_estate_df.loc[0, 'fréquence']
-    yearly_cashflow_df['travaux_non_récurrents'] = np.where(yearly_cashflow_df['year'] % frequency == 0, -real_estate_df.loc[0, 'travaux_non_récurrent'], 0)
+    yearly_cashflow_df['travaux_non_récurrents'] = np.where(yearly_cashflow_df['year'] % frequency == 2, -real_estate_df.loc[0, 'travaux_non_récurrent'], 0)
     
     yearly_cashflow_df['total_non_recurring_charges'] = yearly_cashflow_df['apport'] + yearly_cashflow_df['travaux_non_récurrents']
     
     # Debt
-    yearly_cashflow_df['remboursements'] = real_estate_df.loc[0, 'remboursements']
+    yearly_cashflow_df['remboursements'] = np.where(yearly_cashflow_df['year'] == 0, 0, real_estate_df.loc[0, 'remboursements'])
     yearly_cashflow_df['cash_flow_after_debt'] = yearly_cashflow_df['net_operating_income'] + yearly_cashflow_df['total_non_recurring_charges'] + yearly_cashflow_df['remboursements']
     yearly_cashflow_df['cumulative_cash_flow_after_debt'] = yearly_cashflow_df['cash_flow_after_debt'].cumsum()
     
@@ -154,9 +156,8 @@ def display_checks(real_estate_df: pd.DataFrame):
     This page is used to check the financial feasibility of the investment.
     It is a yearly cashflow, with a row for each year of the time horizon and the following columns (sliced in different sections):
     """)
-    st.dataframe(yearly_cashflow_df)
+    st.dataframe(yearly_cashflow_df.T)
 
-st.dataframe(st.session_state['real_estate_df'])
 real_estate_df = create_additional_features(st.session_state['real_estate_df'].copy())
 st.dataframe(real_estate_df)
 display_checks(real_estate_df)
