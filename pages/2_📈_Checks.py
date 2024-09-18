@@ -4,6 +4,7 @@ import numpy as np
 
 from utils.computations import PMT, compute_remaining_capital_after_y_years
 from utils.gcp_connector import download_dataframe
+import plotly.graph_objects as go
 
 st.set_page_config(page_title="📈 Checks", page_icon="📈")
 
@@ -151,12 +152,14 @@ def build_yearly_cashflow_df(real_estate_df: pd.DataFrame, time_horizon: int = 3
 
 def display_checks(real_estate_df: pd.DataFrame):
     yearly_cashflow_df = build_yearly_cashflow_df(real_estate_df)
-    st.title("📈 Checks")
-    st.markdown("""
-    This page is used to check the financial feasibility of the investment.
-    It is a yearly cashflow, with a row for each year of the time horizon and the following columns (sliced in different sections):
-    """)
     st.dataframe(yearly_cashflow_df.T)
+
+
+st.title("📈 Checks")
+st.markdown("""
+This page is used to check the financial feasibility of the investment.
+It is a yearly cashflow, with a row for each year of the time horizon and the following columns (sliced in different sections):
+""")
 
 real_estate_df = create_additional_features(st.session_state['real_estate_df'].copy())
 st.dataframe(real_estate_df)
