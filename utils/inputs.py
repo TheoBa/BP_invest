@@ -7,6 +7,7 @@ REAL_ESTATE_INPUTS = {
     },
   
     "input_buying_hypothesis" : {
+        "Valeur vénale": 'euros',
         "Prix d'achat": 'euros',
         "Frais d'acquisition (prct prix d'achat)": 'rate',
         "Travaux": 'euros'
