@@ -31,7 +31,7 @@ REAL_ESTATE_INPUTS = {
 
     "input_recurring_charges" : {
         "Gestion locative": 'euros',
-        "Comptabiltié": 'euros',
+        "Comptabilité": 'euros',
         "Frais de copropriété": 'euros',
         "Taxe foncière": 'euros',
         "Frais d'entretien (prct prix d'achat)": 'rate',
