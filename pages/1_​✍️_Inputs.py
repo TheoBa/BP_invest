@@ -86,13 +86,12 @@ def save_real_estate():
     today = datetime.date.today()
     if st.button("Upload real estate data"):
         df0 = download_dataframe("02data.csv")
-        df1 = st.session_state['real_estate_df']
         
-        real_estate_df = pd.concat([df0, df1], axis=1)
-        #real_estate_df = df1
+        real_estate_df = st.session_state['real_estate_df'].copy()
         real_estate_df['timestamp'] = today
-        real_estate_df['real_estate_id'] = real_estate_id
+        real_estate_df['real_estate_id'] = real_estate_id if real_estate_id != "Default" else real_estate_df.iloc[0]['adresse']
         df_updated = pd.concat([df0, real_estate_df], ignore_index=True)
+        #df_updated = real_estate_df
 
         upload_dataframe(df_updated, "02data.csv")
         st.markdown("Sauvegarde réussie !")
