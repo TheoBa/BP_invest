@@ -6,7 +6,7 @@ from utils.computations import PMT, compute_remaining_capital_after_y_years
 from utils.gcp_connector import download_dataframe
 import plotly.graph_objects as go
 
-st.set_page_config(page_title="📈 Checks", page_icon="📈")
+st.set_page_config(page_title="📈 Checks", page_icon="📈", layout="wide")
 
 
 def create_additional_features(database_inputs: pd.DataFrame):
@@ -87,72 +87,94 @@ def build_yearly_cashflow_df(real_estate_df: pd.DataFrame, time_horizon: int = 3
     - net_cash_flow: algebric sum of cash_flow_after_debt and valeur_nette_de_sortie
     - cumulative_net_cash_flow: cumulative sum of net_cash_flow through the years
     """
-    # Initialize the DataFrame with years
-    yearly_cashflow_df = pd.DataFrame({'year': range(time_horizon + 1)})
-    
-    # Income
-    yearly_cashflow_df['rent'] = np.where(yearly_cashflow_df['year'] == 0, 0, real_estate_df.loc[0, 'loyer_mensuel'] * 12 * (1 + real_estate_df.loc[0, 'market_rent_growth']) ** (yearly_cashflow_df['year'] - 1))                                                       
-    yearly_cashflow_df['vacancy'] = -yearly_cashflow_df['rent'] * real_estate_df.loc[0, 'vacancy']
-    yearly_cashflow_df['unpaied_rent'] = -yearly_cashflow_df['rent'] * real_estate_df.loc[0, 'loyers_impayés']
-    yearly_cashflow_df['gross_effective_revenues'] = yearly_cashflow_df['rent'] + yearly_cashflow_df['vacancy'] + yearly_cashflow_df['unpaied_rent']
-    
-    # Recurring charges
-    recurring_charges = ['gestion_locative', 'comptabilité', 'frais_de_copropriété', 'taxe_foncière', 'frais_d_entretien', 'assurance_gli_pno']
-    for charge in recurring_charges:
-        #yearly_cashflow_df[charge] = -real_estate_df.loc[0, charge] * (1 + real_estate_df.loc[0, 'property_tax_growth']) ** (yearly_cashflow_df['year'] - 1)
-        yearly_cashflow_df[charge] = np.where(yearly_cashflow_df['year'] == 0, 0, -real_estate_df.loc[0, charge] * (1 + real_estate_df.loc[0, 'property_tax_growth']) ** (yearly_cashflow_df['year'] - 1))                                                       
-
-    
-    yearly_cashflow_df['total_charges_récurrantes'] = yearly_cashflow_df[recurring_charges].sum(axis=1)
-    
-    # Net Operating Income
-    yearly_cashflow_df['net_operating_income'] = yearly_cashflow_df['gross_effective_revenues'] + yearly_cashflow_df['total_charges_récurrantes']
-    
-    # Non Recurring charges
-    yearly_cashflow_df['apport'] = 0
-    yearly_cashflow_df.loc[0, 'apport'] = -real_estate_df.loc[0, 'apport']
-    
-    frequency = real_estate_df.loc[0, 'fréquence']
-    yearly_cashflow_df['travaux_non_récurrents'] = np.where(yearly_cashflow_df['year'] % frequency == 2, -real_estate_df.loc[0, 'travaux_non_récurrent'], 0)
-    
-    yearly_cashflow_df['total_non_recurring_charges'] = yearly_cashflow_df['apport'] + yearly_cashflow_df['travaux_non_récurrents']
-    
-    # Debt
-    yearly_cashflow_df['remboursements'] = np.where(yearly_cashflow_df['year'] == 0, 0, real_estate_df.loc[0, 'remboursements'])
-    yearly_cashflow_df['cash_flow_after_debt'] = yearly_cashflow_df['net_operating_income'] + yearly_cashflow_df['total_non_recurring_charges'] + yearly_cashflow_df['remboursements']
-    yearly_cashflow_df['cumulative_cash_flow_after_debt'] = yearly_cashflow_df['cash_flow_after_debt'].cumsum()
-    
-    # Selling hypothesis
-    yearly_cashflow_df['valeur_vénale'] = real_estate_df.loc[0, 'valeur_vénale'] * (1 + real_estate_df.loc[0, 'market_value_growth']) ** yearly_cashflow_df['year']
-    
-    selling_year = real_estate_df.loc[0, 'durée_de_détention_(année)']
-    yearly_cashflow_df['valeur_vénale_à_la_vente'] = np.where(yearly_cashflow_df['year'] == selling_year, yearly_cashflow_df['valeur_vénale'], 0)
-    yearly_cashflow_df['frais_de_vente'] = -yearly_cashflow_df['valeur_vénale_à_la_vente'] * real_estate_df.loc[0, 'frais_de_vente_(taux)']
-    
-    yearly_cashflow_df['capital_restant_dû'] = yearly_cashflow_df.apply(lambda row: -compute_remaining_capital_after_y_years(
-        C=real_estate_df.loc[0, 'prix_acquisition'],
-        M=real_estate_df.loc[0, 'mensualité'],
-        t=real_estate_df.loc[0, 'taux_d_emprunt'],
-        y=row['year']
-    ), axis=1)
-    
-    yearly_cashflow_df['capital_residuel_à_la_vente'] = np.where(yearly_cashflow_df['year'] == selling_year, yearly_cashflow_df['capital_restant_dû'], 0)
-    yearly_cashflow_df['valeur_nette_de_sortie'] = np.where(
-        yearly_cashflow_df['year'] == selling_year,
-        yearly_cashflow_df['valeur_vénale_à_la_vente'] + yearly_cashflow_df['frais_de_vente'] + yearly_cashflow_df['capital_residuel_à_la_vente'],
-        0
+    # Initialize the DataFrame with years and apply transformations using operator chaining
+    yearly_cashflow_df = (
+        pd.DataFrame({'year': range(time_horizon + 1)})
+        # Income
+        .assign(
+            rent=lambda df: np.where(df['year'] == 0, 0, real_estate_df.loc[0, 'loyer_mensuel'] * 12 * (1 + real_estate_df.loc[0, 'market_rent_growth']) ** (df['year'] - 1)),
+            vacancy=lambda df: -df['rent'] * real_estate_df.loc[0, 'vacancy'],
+            unpaied_rent=lambda df: -df['rent'] * real_estate_df.loc[0, 'loyers_impayés'],
+            gross_effective_revenues=lambda df: df['rent'] + df['vacancy'] + df['unpaied_rent']
+        )
+        # Recurring charges
+        .assign(**{
+            charge: lambda df, charge=charge: np.where(df['year'] == 0, 0, -real_estate_df.loc[0, charge] * (1 + real_estate_df.loc[0, 'property_tax_growth']) ** (df['year'] - 1))
+            for charge in ['gestion_locative', 'comptabilité', 'frais_de_copropriété', 'taxe_foncière', 'frais_d_entretien', 'assurance_gli_pno']
+        })
+        .assign(
+            total_charges_récurrantes=lambda df: df[['gestion_locative', 'comptabilité', 'frais_de_copropriété', 'taxe_foncière', 'frais_d_entretien', 'assurance_gli_pno']].sum(axis=1),
+            net_operating_income=lambda df: df['gross_effective_revenues'] + df['total_charges_récurrantes']
+        )
+        # Non Recurring charges
+        .assign(
+            apport=lambda df: np.where(df['year'] == 0, -real_estate_df.loc[0, 'apport'], 0),
+            travaux_non_récurrents=lambda df: np.where(df['year'] % real_estate_df.loc[0, 'fréquence'] == 2, -real_estate_df.loc[0, 'travaux_non_récurrent'], 0),
+            total_non_recurring_charges=lambda df: df['apport'] + df['travaux_non_récurrents']
+        )
+        # Debt
+        .assign(
+            remboursements=lambda df: np.where(df['year'] == 0, 0, real_estate_df.loc[0, 'remboursements']),
+            cash_flow_after_debt=lambda df: df['net_operating_income'] + df['total_non_recurring_charges'] + df['remboursements'],
+            cumulative_cash_flow_after_debt=lambda df: df['cash_flow_after_debt'].cumsum()
+        )
+        # Selling hypothesis
+        .assign(
+            valeur_vénale=lambda df: real_estate_df.loc[0, 'valeur_vénale'] * (1 + real_estate_df.loc[0, 'market_value_growth']) ** df['year'],
+            valeur_vénale_à_la_vente=lambda df: np.where(df['year'] == real_estate_df.loc[0, 'durée_de_détention_(année)'], df['valeur_vénale'], 0),
+            frais_de_vente=lambda df: -df['valeur_vénale_à_la_vente'] * real_estate_df.loc[0, 'frais_de_vente_(taux)'],
+            capital_restant_dû=lambda df: df.apply(lambda row: -compute_remaining_capital_after_y_years(
+                C=real_estate_df.loc[0, 'prix_acquisition'],
+                M=real_estate_df.loc[0, 'mensualité'],
+                t=real_estate_df.loc[0, 'taux_d_emprunt'],
+                y=row['year']
+            ), axis=1),
+            capital_residuel_à_la_vente=lambda df: np.where(df['year'] == real_estate_df.loc[0, 'durée_de_détention_(année)'], df['capital_restant_dû'], 0),
+            valeur_nette_de_sortie=lambda df: np.where(
+                df['year'] == real_estate_df.loc[0, 'durée_de_détention_(année)'],
+                df['valeur_vénale_à_la_vente'] + df['frais_de_vente'] + df['capital_residuel_à_la_vente'],
+                0
+            )
+        )
+        # Net Cash Flow
+        .assign(
+            net_cash_flow=lambda df: df['cash_flow_after_debt'] + df['valeur_nette_de_sortie'],
+            cumulative_net_cash_flow=lambda df: df['net_cash_flow'].cumsum()
+        )
+        # Map the 'year' column to 'year_{i}' format and set it as the index
+        .assign(year=lambda df: df['year'].apply(lambda i: f'year_{i}'))
+        .set_index('year')
     )
-    
-    # Net Cash Flow
-    yearly_cashflow_df['net_cash_flow'] = yearly_cashflow_df['cash_flow_after_debt'] + yearly_cashflow_df['valeur_nette_de_sortie']
-    yearly_cashflow_df['cumulative_net_cash_flow'] = yearly_cashflow_df['net_cash_flow'].cumsum()
     
     return yearly_cashflow_df
 
 
 def display_checks(real_estate_df: pd.DataFrame):
     yearly_cashflow_df = build_yearly_cashflow_df(real_estate_df)
-    st.dataframe(yearly_cashflow_df.T)
+    def color_negative_red(val):
+        color = 'red' if val < 0 else 'black'
+        return f'color: {color}'
+
+    def highlight_rows(s):
+        is_highlight = s.name in ["gross_effective_revenues", "total_charges_récurrantes", "net_operating_income", "total_non_recurring_charges", "cash_flow_after_debt", "valeur_nette_de_sortie", "net_cash_flow"]
+        return ['font-weight: bold; background-color: #e6f2ff' if is_highlight else '' for _ in s]
+
+    styled_df = yearly_cashflow_df.T.astype(int).style.map(color_negative_red).apply(highlight_rows, axis=1)
+    
+    # Create a scrollable container for the dataframe
+    st.markdown(
+        f"""
+        <div style="max-height: 500px; overflow-y: scroll;">
+            {styled_df.to_html()}
+        """,
+        unsafe_allow_html=True
+    )
+
+
+def query_real_estate_df():
+    real_estate_df = download_dataframe("02data.csv")
+    real_estate_id = st.selectbox("Select a real estate", real_estate_df['real_estate_id'].unique())
+    return real_estate_df[real_estate_df['real_estate_id'] == real_estate_id].sort_values('timestamp', ascending=False).iloc[:1].reset_index(drop=True)
 
 
 st.title("📈 Checks")
@@ -161,6 +183,7 @@ This page is used to check the financial feasibility of the investment.
 It is a yearly cashflow, with a row for each year of the time horizon and the following columns (sliced in different sections):
 """)
 
-real_estate_df = create_additional_features(st.session_state['real_estate_df'].copy())
-st.dataframe(real_estate_df)
+real_estate_df = query_real_estate_df()
+real_estate_df = create_additional_features(real_estate_df.copy())
+#st.dataframe(real_estate_df)
 display_checks(real_estate_df)
