@@ -6,7 +6,7 @@ from utils.gcp_connector import download_dataframe, upload_dataframe
 from typing import Dict, Any
 
 
-st.set_page_config(page_title="✍️ Inputs", page_icon="✍️")
+st.set_page_config(page_title="✍️ Inputs", page_icon="✍️", layout="wide")
 
 
 def init_input(INPUT):
@@ -55,23 +55,25 @@ def display_inputs():
 def create_real_estate_input_forms(inputs: Dict[str, Dict[str, str]]) -> pd.DataFrame:
     user_inputs = {}
 
-    with st.form("my_form"):
-        for section, fields in inputs.items():
-            st.subheader(section.replace("input_", "").replace("_", " ").title())
-            for field, input_properties in fields.items():
-                input_type = input_properties[0]
-                init_value = input_properties[1]
-                if input_type == 'text':
-                    user_inputs[field] = st.text_input(field, value=init_value)
-                elif input_type in ['percentage', 'rate']:
-                    user_inputs[field] = st.number_input(field, value=init_value) / 100
-                elif input_type in ['int', 'euros', 'year']:
-                    user_inputs[field] = st.number_input(field, value=init_value)
-        submitted = st.form_submit_button("Submit")
-        # Update the session state with the new DataFrame
-        if submitted:
+    buffer1, col, buffer2 = st.columns([1, 1, 1])
+    with col:
+        with st.form("my_form"):
             for section, fields in inputs.items():
-                st.session_state[f"_{section}"] = pd.DataFrame([user_inputs])[list(fields.keys())]
+                st.subheader(section.replace("input_", "").replace("_", " ").title())
+                for field, input_properties in fields.items():
+                    input_type = input_properties[0]
+                    init_value = input_properties[1]
+                    if input_type == 'text':
+                        user_inputs[field] = st.text_input(field, value=init_value)
+                    elif input_type in ['percentage', 'rate']:
+                        user_inputs[field] = st.number_input(field, value=init_value) / 100
+                    elif input_type in ['int', 'euros', 'year']:
+                        user_inputs[field] = st.number_input(field, value=init_value)
+            submitted = st.form_submit_button("Submit")
+            # Update the session state with the new DataFrame
+            if submitted:
+                for section, fields in inputs.items():
+                    st.session_state[f"_{section}"] = pd.DataFrame([user_inputs])[list(fields.keys())]
 
     # Create a DataFrame with a single row
     df = pd.DataFrame([user_inputs])    
@@ -110,5 +112,5 @@ def input_tabs():
 
 
 initialize_inputs()
-display_inputs()
 input_tabs()
+display_inputs()
