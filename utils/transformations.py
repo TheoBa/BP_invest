@@ -6,6 +6,43 @@ import numpy as np
 
 
 def create_additional_features(database_inputs: pd.DataFrame):
+    """
+    This function creates additional features for a real estate dataframe.
+    It is used to enrich the input dataframe with calculated columns based on various financial, market, and operational hypotheses.
+    
+    Parameters:
+    - database_inputs (pd.DataFrame): The input dataframe containing initial real estate data.
+    
+    Returns:
+    - pd.DataFrame: A dataframe with additional calculated features.
+    
+    The following sections and features are added:
+    
+    input_buying_hypothesis:
+    - frais_d_acquisition: Acquisition fees calculated as a percentage of the purchase price.
+    - prix_acquisition: Total acquisition price including purchase price, acquisition fees, and renovation costs.
+    
+    input_financial_hypothesis:
+    - ltv: Loan-to-value ratio calculated as the loan amount divided by the acquisition price.
+    - montant_emprunté: Loan amount based on the loan-to-value ratio and acquisition price.
+    - mensualité: Monthly payment calculated using the PMT function.
+    
+    input_market_hypothesis:
+    - capital_restant_dû: Remaining capital after a certain number of years, calculated using the compute_remaining_capital_after_y_years function.
+    - valeur_de_sortie: Exit value of the property based on market value growth over the holding period.
+    - frais_de_vente: Selling fees calculated as a percentage of the exit value.
+    - valeur_nette_de_sortie: Net exit value after deducting selling fees and remaining capital.
+    
+    input_annual_revenue:
+    - remboursements: Annual repayments calculated as the monthly payment multiplied by 12.
+    
+    input_recurring_charges:
+    - frais_d_entretien: Maintenance fees calculated as a percentage of the purchase price.
+    - assurance_gli_pno: Insurance fees calculated as a percentage of the annual rent.
+    
+    input_operating_capex:
+    - total_charges_récurrantes: Total recurring charges including repayments, property management, accounting, co-ownership fees, property tax, maintenance fees, and insurance fees.
+    """
     real_estate_df = (
         database_inputs
         .copy()
@@ -18,7 +55,7 @@ def create_additional_features(database_inputs: pd.DataFrame):
             montant_emprunté = lambda x: x["ltv"] * x["prix_acquisition"],
             mensualité = lambda x: PMT(C=x["montant_emprunté"], n=x["durée_de_crédit_(année)"]*12, t=x["taux_d_emprunt"]),
             # section "input_market_hypothesis"
-            capital_restant_dû = lambda x: - compute_remaining_capital_after_y_years(C=x["prix_acquisition"], M=x["mensualité"], t=x["taux_d_emprunt"], y=x["durée_de_détention_(année)"]),
+            capital_restant_dû = lambda x: - compute_remaining_capital_after_y_years(C=x["montant_emprunté"], M=x["mensualité"], t=x["taux_d_emprunt"], y=x["durée_de_détention_(année)"]),
             valeur_de_sortie = lambda x: x["valeur_vénale"] * (1+ x["market_value_growth"]) ** x["durée_de_détention_(année)"],
             frais_de_vente = lambda x: - x["frais_de_vente_(taux)"] * x["valeur_de_sortie"],
             valeur_nette_de_sortie = lambda x: x["valeur_de_sortie"] + x["frais_de_vente"] + x["capital_restant_dû"],
@@ -40,6 +77,14 @@ def build_yearly_cashflow_df(real_estate_df: pd.DataFrame, time_horizon: int = 3
     This function builds a yearly cashflow dataframe from a real estate dataframe.
     It is used to check the financial feasibility of the investment.
     It is a yearly cashflow, with a row for each year of the time horizon and the following columns (sliced in different sections):
+    
+    Parameters:
+    - real_estate_df (pd.DataFrame): The input dataframe containing initial real estate data.
+    - time_horizon (int): The number of years to project the cashflow.
+    
+    Returns:
+    - pd.DataFrame: A dataframe with the yearly cashflow.
+    
     Index:
     - year: from 0 to time_horizon
     
@@ -67,7 +112,7 @@ def build_yearly_cashflow_df(real_estate_df: pd.DataFrame, time_horizon: int = 3
     - total_non_recurring_charges: sum of apport and travaux_non_récurrents
     
     Debt:
-    - remboursements: 0 in year 0 and real_estate_df.loc[0, "remboursements"] every other year
+    - remboursements: 0 in year 0 and real_estate_df.loc[0, "remboursements"] every other year. Must be set to 0 for year greater than real_estate_df.loc[0, "durée_de_crédit_(année)"]
     - cash_flow_after_debt: algebric sum of net_operating_income, total_non_recurring_charges and remboursements
     - cumulative_cash_flow_after_debt: cumulative sum of cash_flow_after_debt through the years
 
@@ -75,13 +120,15 @@ def build_yearly_cashflow_df(real_estate_df: pd.DataFrame, time_horizon: int = 3
     - valeur_vénale: previous year's valeur_vénale * (1 + real_estate_df["market_value_growth"]), initialized with real_estate_df.loc[0, "valeur_vénale"]
     - valeur_vénale_à_la_vente: valeur_vénale only in the selling year, 0 otherwise
     - frais_de_vente: valeur_vénale_à_la_vente * real_estate_df["frais_de_vente_(taux)"]
-    - capital_restant_dû: - compute_remaining_capital_after_y_years(C=real_estate_df["prix_acquisition"], M=real_estate_df["mensualité"], t=real_estate_df["taux_d_emprunt"], y=year)
+    - capital_restant_dû: - compute_remaining_capital_after_y_years(C=real_estate_df["montant_emprunté"], M=real_estate_df["mensualité"], t=real_estate_df["taux_d_emprunt"], y=year)
     - capital_residuel_à_la_vente: capital_restant_dû only in the selling year, 0 otherwise
     - valeur_nette_de_sortie: algebric sum of valeur_vénale_à_la_vente, frais_de_vente and capital_restant_dû_à_la_vente only in the selling year, 0 otherwise
 
     Net Cash Flow:
     - net_cash_flow: algebric sum of cash_flow_after_debt and valeur_nette_de_sortie
     - cumulative_net_cash_flow: cumulative sum of net_cash_flow through the years
+
+    Every value is set to 0 after the selling year (except cumulative_net_cash_flow and cumulative_cash_flow_after_debt).
     """
     # Initialize the DataFrame with years and apply transformations using operator chaining
     yearly_cashflow_df = (
@@ -105,12 +152,12 @@ def build_yearly_cashflow_df(real_estate_df: pd.DataFrame, time_horizon: int = 3
         # Non Recurring charges
         .assign(
             apport=lambda df: np.where(df['year'] == 0, -real_estate_df.loc[0, 'apport'], 0),
-            travaux_non_récurrents=lambda df: np.where(df['year'] % real_estate_df.loc[0, 'fréquence'] == 2, -real_estate_df.loc[0, 'travaux_non_récurrent'], 0),
+            travaux_non_récurrents=lambda df: np.where((df['year'] % real_estate_df.loc[0, 'fréquence'] == 0) & (df['year'] != 0), -real_estate_df.loc[0, 'travaux_non_récurrent'], 0),
             total_non_recurring_charges=lambda df: df['apport'] + df['travaux_non_récurrents']
         )
         # Debt
         .assign(
-            remboursements=lambda df: np.where(df['year'] == 0, 0, real_estate_df.loc[0, 'remboursements']),
+            remboursements=lambda df: np.where((df['year'] == 0) | (df['year'] > real_estate_df.loc[0, 'durée_de_crédit_(année)']), 0, real_estate_df.loc[0, 'remboursements']),
             cash_flow_after_debt=lambda df: df['net_operating_income'] + df['total_non_recurring_charges'] + df['remboursements'],
             cumulative_cash_flow_after_debt=lambda df: df['cash_flow_after_debt'].cumsum()
         )
@@ -120,7 +167,7 @@ def build_yearly_cashflow_df(real_estate_df: pd.DataFrame, time_horizon: int = 3
             valeur_vénale_à_la_vente=lambda df: np.where(df['year'] == real_estate_df.loc[0, 'durée_de_détention_(année)'], df['valeur_vénale'], 0),
             frais_de_vente=lambda df: -df['valeur_vénale_à_la_vente'] * real_estate_df.loc[0, 'frais_de_vente_(taux)'],
             capital_restant_dû=lambda df: df.apply(lambda row: -compute_remaining_capital_after_y_years(
-                C=real_estate_df.loc[0, 'prix_acquisition'],
+                C=real_estate_df.loc[0, 'montant_emprunté'],
                 M=real_estate_df.loc[0, 'mensualité'],
                 t=real_estate_df.loc[0, 'taux_d_emprunt'],
                 y=row['year']
@@ -137,11 +184,15 @@ def build_yearly_cashflow_df(real_estate_df: pd.DataFrame, time_horizon: int = 3
             net_cash_flow=lambda df: df['cash_flow_after_debt'] + df['valeur_nette_de_sortie'],
             cumulative_net_cash_flow=lambda df: df['net_cash_flow'].cumsum()
         )
+        # Set values to 0 after the selling year
+        .assign(
+            **{col: lambda df, col=col: np.where(df.index > real_estate_df.loc[0, 'durée_de_détention_(année)'], 0, df[col])
+               for col in ['rent', 'vacancy', 'unpaied_rent', 'gross_effective_revenues', 'gestion_locative', 'comptabilité', 'frais_de_copropriété', 'taxe_foncière', 'frais_d_entretien', 'assurance_gli_pno', 'total_charges_récurrantes', 'net_operating_income', 'apport', 'travaux_non_récurrents', 'total_non_recurring_charges', 'remboursements', 'cash_flow_after_debt', 'valeur_vénale', 'valeur_vénale_à_la_vente', 'frais_de_vente', 'capital_restant_dû', 'capital_residuel_à_la_vente', 'valeur_nette_de_sortie', 'net_cash_flow']}
+        )
         # Map the 'year' column to 'year_{i}' format and set it as the index
         .assign(year=lambda df: df['year'].apply(lambda i: f'year_{i}'))
         .set_index('year')
     )
-    
     return yearly_cashflow_df
 
 
