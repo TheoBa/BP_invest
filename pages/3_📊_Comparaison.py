@@ -87,7 +87,7 @@ def main():
     
     # Select real estate
     real_estate_df = query_real_estate_df()
-    real_estate_df = create_additional_features(real_estate_df.copy())
+    
     
     col1, col2 = st.columns(2)
     
@@ -102,7 +102,8 @@ def main():
     real_estate_df.loc[0, 'durée_de_crédit_(année)'] = credit_duration
     
     # Rebuild yearly_cashflow_df
-    yearly_cashflow_df = build_yearly_cashflow_df(real_estate_df)
+    rebuilt_real_estate_df = create_additional_features(real_estate_df.copy())
+    yearly_cashflow_df = build_yearly_cashflow_df(rebuilt_real_estate_df)
     df = yearly_cashflow_df.T
     
     create_kpi_metrics(df, detention_period)
