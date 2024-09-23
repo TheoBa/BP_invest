@@ -95,10 +95,12 @@ def main():
         detention_period = st.slider("Durée de détention (années)", 1, 30, int(real_estate_df.loc[0, 'durée_de_détention_(année)']))
     
     with col2:
+        credit_rate = st.slider("Taux d'emprunt", 0.0, 5.0, 100 * float(real_estate_df.loc[0, 'taux_d_emprunt'])) / 100
         credit_duration = st.slider("Durée de crédit (années)", 1, 30, int(real_estate_df.loc[0, 'durée_de_crédit_(année)']))
     
     # Update real_estate_df with new values
     real_estate_df.loc[0, 'durée_de_détention_(année)'] = detention_period
+    real_estate_df.loc[0, 'taux_d_emprunt'] = credit_rate
     real_estate_df.loc[0, 'durée_de_crédit_(année)'] = credit_duration
     
     # Rebuild yearly_cashflow_df
