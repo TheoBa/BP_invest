@@ -183,14 +183,9 @@ def build_yearly_cashflow_df(real_estate_df: pd.DataFrame, time_horizon: int = 3
         .assign(
             net_cash_flow=lambda df: df['cash_flow_after_debt'] + df['valeur_nette_de_sortie'],
             cumulative_net_cash_flow=lambda df: df['net_cash_flow'].cumsum()
-        )
-        # Set every value to 0 after the selling year
-        .pipe(lambda df: df.assign(
-            **{col: np.where(df['year'] > real_estate_df.loc[0, 'durée_de_détention_(année)'], 0, df[col]) 
-                for col in df.columns if col != 'year'}))
-        # Adjust cumulative rows
-        .assign(cumulative_cash_flow_after_debt=lambda df: df['cash_flow_after_debt'].cumsum())
-        .assign(cumulative_net_cash_flow=lambda df: df['net_cash_flow'].cumsum())
+        )        
+        # Remove years after the detention period
+        .loc[lambda df: df['year'] <= real_estate_df.loc[0, 'durée_de_détention_(année)']]
         # Map the 'year' column to 'year_{i}' format and set it as the index
         .assign(year=lambda df: df['year'].apply(lambda i: f'year_{i}'))
         .set_index('year')
