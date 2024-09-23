@@ -184,11 +184,13 @@ def build_yearly_cashflow_df(real_estate_df: pd.DataFrame, time_horizon: int = 3
             net_cash_flow=lambda df: df['cash_flow_after_debt'] + df['valeur_nette_de_sortie'],
             cumulative_net_cash_flow=lambda df: df['net_cash_flow'].cumsum()
         )
-        # Set values to 0 after the selling year
-        .assign(
-            **{col: lambda df, col=col: np.where(df.index > real_estate_df.loc[0, 'durée_de_détention_(année)'], 0, df[col])
-               for col in ['rent', 'vacancy', 'unpaied_rent', 'gross_effective_revenues', 'gestion_locative', 'comptabilité', 'frais_de_copropriété', 'taxe_foncière', 'frais_d_entretien', 'assurance_gli_pno', 'total_charges_récurrantes', 'net_operating_income', 'apport', 'travaux_non_récurrents', 'total_non_recurring_charges', 'remboursements', 'cash_flow_after_debt', 'valeur_vénale', 'valeur_vénale_à_la_vente', 'frais_de_vente', 'capital_restant_dû', 'capital_residuel_à_la_vente', 'valeur_nette_de_sortie', 'net_cash_flow']}
-        )
+        # Set every value to 0 after the selling year
+        .pipe(lambda df: df.assign(
+            **{col: np.where(df['year'] > real_estate_df.loc[0, 'durée_de_détention_(année)'], 0, df[col]) 
+                for col in df.columns if col != 'year'}))
+        # Adjust cumulative rows
+        .assign(cumulative_cash_flow_after_debt=lambda df: df['cash_flow_after_debt'].cumsum())
+        .assign(cumulative_net_cash_flow=lambda df: df['net_cash_flow'].cumsum())
         # Map the 'year' column to 'year_{i}' format and set it as the index
         .assign(year=lambda df: df['year'].apply(lambda i: f'year_{i}'))
         .set_index('year')
