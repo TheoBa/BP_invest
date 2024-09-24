@@ -4,7 +4,7 @@ import pandas as pd
 from utils.gcp_connector import download_dataframe
 from utils.transformations import build_yearly_cashflow_df, create_additional_features
 
-st.set_page_config(page_title="📈 Checks", page_icon="📈", layout="wide")
+st.set_page_config(page_title="🔢 Checks", page_icon="🔢", layout="wide")
 
 
 def display_checks(real_estate_df: pd.DataFrame):
