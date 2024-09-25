@@ -25,8 +25,21 @@ REAL_ESTATE_INPUTS = {
         "taux_d_actualisation": ['percentage', 5]
     },
 
+    "input_operating_capex" : {
+        "travaux_non_récurrent": ['euros', 2000],
+        "fréquence": ['year', 3]
+    },
+
     "input_annual_revenue" : {
         "loyer_mensuel": ['euros', 721]
+    },
+
+    "input_market_sensitivity" : {
+        "market_value_growth": ['percentage', 1],
+        "market_rent_growth": ['percentage', 2],
+        "property_tax_growth": ['percentage', 1],
+        "vacancy": ['percentage', 2],
+        "loyers_impayés": ['percentage', 0]
     },
 
     "input_recurring_charges" : {
@@ -36,18 +49,5 @@ REAL_ESTATE_INPUTS = {
         "taxe_foncière": ['euros', 700],
         "frais_d_entretien_(prct_prix_d_achat)": ['rate', 1],
         "assurance_(gli,_pno)_(prct_loyer)": ['rate', 5]
-    },
-
-    "input_operating_capex" : {
-        "travaux_non_récurrent": ['euros', 2000],
-        "fréquence": ['year', 3]
-    },
-
-    "input_market_sensitivity" : {
-        "market_value_growth": ['percentage', 1],
-        "market_rent_growth": ['percentage', 2],
-        "property_tax_growth": ['percentage', 1],
-        "vacancy": ['percentage', 2],
-        "loyers_impayés": ['percentage', 0]
     }
 }
