@@ -35,7 +35,6 @@ def create_kpi_metrics(df, real_estate_df):
     apport = real_estate_df.loc[0, 'apport']
     st.markdown("## Key metrics after detention period")
     col1, col2, col3, col4 = st.columns(4)
-
     with col1:
         st.metric("Net Cash Flow", f"€{df['cumulative_net_cash_flow'][f'year_{detention_period}']:,.0f}")
     with col2:
@@ -44,6 +43,18 @@ def create_kpi_metrics(df, real_estate_df):
         st.metric("VAN (Valeur Actuelle Nette)", f"{npf.npv(actualisation_rate, df['net_cash_flow'].to_list()):,.2f}€")
     with col4:
         st.metric("EqX", f"{df['cumulative_net_cash_flow'][f'year_{detention_period}']/apport:,.2f}x")
+    
+    st.markdown("## Key metrics over the investment period")
+    buffer, col1, col2, col3, buffer = st.columns(5)
+    with col1:
+        min_net_cash_flow = df.loc[df.index > 'year_0', 'net_cash_flow'].min()
+        st.metric("Min of Net Cash Flow (excluding contribution)", f"€{min_net_cash_flow:,.0f}")
+    with col2:
+        min_cumulative_net_cash_flow = df.loc[df.index > 'year_0', 'cumulative_net_cash_flow'].min() + apport
+        st.metric("Min of Cumulative Net Cash Flow", f"€{min_cumulative_net_cash_flow:,.0f}")
+    with col3:
+        mean_net_cash_flow = df.loc[(df.index > 'year_0')&(df.index < f'year_{detention_period}'), 'net_cash_flow'].mean()
+        st.metric("Mean of Net Cash Flow", f"€{mean_net_cash_flow:,.0f}")
 
 def create_cash_flow_chart(df, max_year):
     fig = make_subplots(specs=[[{"secondary_y": True}]])
